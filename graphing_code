@@ -1,0 +1,5 @@
+gg<-ggplot(analysis, aes(x=age, y=satisfaction_relationship))
+gg<-gg+geom_boxplot(aes(fill=age))
+gg<-gg+facet_grid(.~sex)
+gg
+
