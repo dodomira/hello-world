@@ -2,3 +2,6 @@ data.frame<-complete.cases(data.frame)  ## delete rows with na (option 1)
 data.frame<-na.omit(data.frame) ## delete rows with na (option 2)
 
 new_data_frame<-split(data.frame, data.frame$category) ##divide DF by variable
+
+x = factor(x,levels(x)[c(4,5,1:3)]) ## reordering factor variable "x"'s levels 
+levels(x) <-c("name1", "name2", "name3") ## renaming factor variable "x"
