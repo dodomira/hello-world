@@ -1,3 +1,4 @@
 data.frame<-complete.cases(data.frame)  ## delete rows with na (option 1)
 data.frame<-na.omit(data.frame) ## delete rows with na (option 2)
 
+new_data_frame<-split(data.frame, data.frame$category) ##divide DF by variable
