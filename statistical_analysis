@@ -1,0 +1,1 @@
+summary(aov(satisfaction_relationship~wage, data=data.frame)) ## check difference in satisfaction_relationship among wage group  
