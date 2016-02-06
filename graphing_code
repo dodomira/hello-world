@@ -1,5 +1,17 @@
+
+## boxplot with different row
+
 gg<-ggplot(analysis, aes(x=age, y=satisfaction_relationship))
 gg<-gg+geom_boxplot(aes(fill=age))
 gg<-gg+facet_grid(.~sex)
 gg
 
+
+
+##jittered scatter plot
+gg<-ggplot(analysis, aes(x=relationship, y=satisfaction_relationship))
+gg<-gg+geom_point(position="jitter")
+gg<-gg+facet_grid(.~sex)
+gg
+
+gg+geom_smooth(method="lm", formular=y~x) ## add regression line to graph
