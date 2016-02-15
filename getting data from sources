@@ -1,0 +1,6 @@
+## getting my season 2016 champion play record
+install.packages("XML")
+library(XML)
+url<-"http://fow.kr/find/dodomira"
+tt<-readHTMLTable(url, header=T)
+tt[[4]]
