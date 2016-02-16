@@ -5,3 +5,7 @@ new_data_frame<-split(data.frame, data.frame$category) ##divide DF by variable
 
 x = factor(x,levels(x)[c(4,5,1:3)]) ## reordering factor variable "x"'s levels 
 levels(x) <-c("name1", "name2", "name3") ## renaming factor variable "x"
+
+
+##함수레벨조정(동일하게)
+output[]<-lapply(output, factor, levels=levels(championname))
