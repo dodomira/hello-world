@@ -16,4 +16,20 @@ f_s5<-function(names){
 }
 
 
-output[]<-lapply(output, factor, levels=levels(championname))
+input<-data.frame(names=c("ondraz", "huskee", "ted"))
+f_s5(input)->output
+cn<-read.csv(file.choose())
+c.list<-as.factor(cn$names)
+
+
+output[]<-lapply(output, factor, levels=levels(c.list))
+library (plyr)
+df <- ldply (output, data.frame)
+names(df)<-c("player", "cmp")
+df[!duplicated(df), ]
+
+split(df$cmp, df$player)->split.df
+library(arules)
+trans.df<-as(split.df, "transactions")
+rules<- apriori(trans.df)
+
