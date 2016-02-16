@@ -1,0 +1,17 @@
+##사람이름 -> 시즌5챔피언 얻는 함수
+f_s5<-function(names){
+  if(!is.element('XML', installed.packages()[,1]))
+  {install.packages('XML')
+  }else {print("XML library already installed")}
+  library(XML)
+  names$url<-paste("http://fow.kr/find/", names$names, sep="")
+  raw<-lapply(as.list(paste(names$url, sep="/")), 
+         function(x){
+           readHTMLTable(x, header=F)})
+ raw_s5<-lapply(raw, function(x){return(x[6])})
+ raw_s5_chmp<-lapply(raw_s5, function(x){return(data.frame(x))})
+ raw_s5_chmp_names<-lapply(raw_s5_chmp, function(x){x[,1]})
+ names(raw_s5_chmp_names)<-names$names
+  return(raw_s5_chmp_names)
+}
+
