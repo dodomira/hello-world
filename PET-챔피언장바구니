@@ -15,3 +15,5 @@ f_s5<-function(names){
   return(raw_s5_chmp_names)
 }
 
+
+output[]<-lapply(output, factor, levels=levels(championname))
