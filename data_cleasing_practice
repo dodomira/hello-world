@@ -9,3 +9,6 @@ levels(x) <-c("name1", "name2", "name3") ## renaming factor variable "x"
 
 ##함수레벨조정(동일하게)
 output[]<-lapply(output, factor, levels=levels(championname))
+
+##표준점수 만드는법(세그멘테이션 할떄) 
+MDuser.data<-as.data.frame(lapply(MDuser[, -1], scale))
