@@ -7,7 +7,8 @@ MDuser.data<-cbind(account_id=MDuser[, 1], MDuser.data)
 str(MDuser.data)
 names(MDuser.data)
 
-MDkmeans<-kmeans(MDuser[, -c(1, 2, 4, 5)], centers=5, iter.max = 100)
+set.seed(123)
+MDkmeans<-kmeans(MDuser.data[, -c(1, 2, 4, 5)], centers=5, iter.max = 1000)
 
 MDuser<-cbind(MDuser, cluster=MDkmeans$cluster)
 MDuser$cluster<-as.factor(MDuser$cluster)
@@ -17,9 +18,15 @@ library(ggplot2)
 g<-ggplot(aes(x=usd_jan, y=sum), data=MDuser)
 g<-g+geom_point(aes(color=cluster, pch=cluster))+facet_grid(.~cluster)
 g<-g+geom_smooth(method="lm", formular=y~x)
+g<-g+ggtitle("MD세그멘트별 RP구매액 vs MD구매액")+labs(x="RP구매액", y="MD구매액")
+g+ scale_y_continuous(limit = c(0, 3000000))
 g
 
 
 library(doBy)
 summaryBy(.~cluster, MDuser)
 ddply(MDuser, .(cluster), function(x){nrow(x)})
+
+
+print(g)
+ggsave("a.png", width = 16, height = 9, dpi = 120)
