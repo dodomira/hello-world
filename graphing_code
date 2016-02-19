@@ -16,6 +16,6 @@ gg
 
 gg+geom_smooth(method="lm", formular=y~x) ## add regression line to graph
 gg+theme(text = element_text(size=30)) ## change font scale
--gg++theme(text = element_text(size=30), axis.text.x=element_blank()) ## remove x-axis texts
+gg+theme(text = element_text(size=30), axis.text.x=element_blank()) ## remove x-axis texts
 
 library(gridExtra); grid.arrange(gg, aa, nrow=2) multiple graph in ggplot
