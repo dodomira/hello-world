@@ -1,0 +1,74 @@
+install.packages("recommenderlab")
+library(recommenderlab)
+ m <- matrix(sample(c(as.numeric(0:5), NA), 50,
+  replace=TRUE, prob=c(rep(.4/6,6),.6)), ncol=10,
+dimnames=list(user=paste("u", 1:5, sep=✬✬),
+ item=paste("i", 1:10, sep=✬✬)))
+ m
+
+ m <- matrix(sample(c(as.numeric(0:5), NA), 
+                    50,replace=TRUE, prob=c(rep(.4/6,6),.6)), ncol=10, 
+             dimnames=list(user=paste("u", 1:5, sep=''),
+                           item=paste("i", 1:10, sep='')))
+ 
+ r <- as(m, "realRatingMatrix")
+
+#as(r,"dgCMatrix")
+ identical(as(r, "matrix"),m)
+
+ head(as(r, "data.frame"))
+ 
+ r_m <- normalize(r)
+ r_m
+ 
+ 
+ image(r, main = "Raw Ratings")
+ image(r_m, main = "Normalized Ratings")
+ 
+ r_b <- binarize(r, minRating=4)
+ as(r_b, "matrix")
+ 
+ hist(getRatings(r), breaks=100)
+ hist(getRatings(normalize(r)), breaks=100)
+
+ hist(getRatings(normalize(r, method="Z-score")), breaks=100)
+ 
+ hist(rowCounts(r), breaks=50)
+ hist(colMeans(r), breaks=20)
+ recommenderRegistry$get_entries(dataType = "realRatingMatrix")
+ 
+ r <- Recommender(Jester5k[1:1000], method = "POPULAR")
+ names(getModel(r))
+ 
+ getModel(r)$topN
+ 
+ 
+ 
+ recom <- predict(r, Jester5k[1001:1002], n=5)
+ recom
+ 
+ recom3 <- bestN(recom, n = 3)
+ recom3
+ as(recom3, "list")
+ 
+ 
+ recom <- predict(r, Jester5k[1001:1002], type="ratings")
+ recom
+ 
+ as(recom, "matrix")[,1:10]
+ 
+ e <- evaluationScheme(Jester5k[1:1000], method="split", train=0.9, 
+                       given=15, goodRating=5)
+
+ r1 <- Recommender(getData(e, "train"), "UBCF")
+ r2 <- Recommender(getData(e, "train"), "IBCF")
+ p1 <- predict(r1, getData(e, "known"), type="ratings")
+ p2 <- predict(r2, getData(e, "known"), type="ratings")
+ 
+ error <- rbind(
+   calcPredictionAccuracy(p1, getData(e, "unknown")),
+   calcPredictionAccuracy(p2, getData(e, "unknown"))
+ )
+ 
+ rownames(error) <- c("UBCF","IBCF")
+ error
