@@ -30,56 +30,186 @@ write.csv(MDuser, "MDuser.csv")
 
 
 
-read.csv(file.choose())->MDuserNEw
+read.csv(file.choose())->ssn
+ssn<-ssn[,-21]
 
 library(reshape2)
 library(scales)
 
-g<-ggplot(aes(age), data=MDuserNEw)
-g<-g+geom_histogram(aes(fill=seg, y=   ..density.., group=seg), breaks=seq(12,40, by=1))+facet_grid(.~seg)
-g<-g+scale_y_continuous(labels = percent_format())
-g
+library(ggplot2)
 
-
-g<-ggplot(aes(a), data=a)
-g<-g+geom_histogram(aes(y=   ..density.., group=seg), breaks=seq(12,40, by=1))
-g<-g+geom_histogram(aes(fill=age.adjusted))
-
-g<-g+scale_y_continuous(labels = percent_format())+facet_grid(.~seg)
-g
-
-
-g<-ggplot(aes(age), data=MDuserNEw)
-g<-g+geom_density()+facet_grid(.~seg)
-g<-g+scale_y_continuous(labels = percent_format())
+g<-ggplot(aes(x=age, fill=source), data=ssn)
+g<-g+geom_histogram( fill="white", color="black", breaks=seq(10,80, by=1),aes(y=   ..density..))
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+           plot.title = element_text(size=30))
+ 
 g
 
 
 
-g<-ggplot(aes(x=age, fill=source), data=new1)
-g+geom_density(alpha=.3)+facet_grid(.~gender)
+g<-ggplot(aes(x=age,), data=ssn)
+g<-g+geom_histogram(color="black", position="identity", alpha=.5, aes(fill=gender), breaks=seq(10, 50
+                                                                                , by=1))
+g<-g+scale_fill_manual(values=c("black", "blue"))
+g<-g+ylab("count")+xlab("Age")+ggtitle("Age distribution by gender")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18)
+           , strip.text.x = element_text(size = 18)
+           , plot.title = element_text(size=30))
 
-
-
-
-
-
-
-g<-ggplot(aes(x=age, fill=source), data=new1)
-g+geom_density(alpha=.3)+facet_grid(.~gender)
-
-
-g<-ggplot(aes(x=age, fill=source), data=new1)
-g+geom_density(alpha=.3)+facet_grid(.~gender)
-
-
-ddply(Combinded, .(source), function(x){mean(x$age)})
-
-
-g<-ggplot(aes(x=age, fill=source), data=Original)
-g<-g+geom_histogram( fill="white", color="black", breaks=seq(10,80, by=1),aes(y=   ..density..))+ylab("비중")
-g<-g+theme(text = element_text(size=30))+title("Raw SSN 기준 연령분포")
 g
 
-ddply(new1, .(gender, source), function(x){mean(x$age)})
+
+ddply(ssn, .(gender), length)
+
+
+
+
+
+original<-ssn[, c(16, 19)]
+adjusted<-ssn[, c(23, 22)]
+original$type<-"raw"
+adjusted$type<-"refined"
+names(adjusted)<-names(original)
+ssn2<-rbind(original, adjusted)
+
+
+ssn2$type<-as.factor(ssn2$type)
+str(ssn2)
+
+g<-ggplot(aes(x=age), data=ssn2)
+g<-g+geom_histogram(alpha=.5, aes(fill=type, y=..density..),  position="identity", breaks=seq(10,80, by=1))
+g
+
+g<-ggplot(aes(x=age), data=ssn2)
+g<-g+geom_density(alpha=.5, aes(fill=type))
+g<-g+scale_fill_manual(values=c("grey", "light blue"))
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+           plot.title = element_text(size=30))
+g
+
+
+
+g<-ggplot(aes(x=age), data=ssn2)
+g<-g+geom_density(alpha=.5, aes(fill=type))
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution by gender")
+g<-g+scale_fill_manual(values=c("grey", "light blue"))
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18)
+            , strip.text.x = element_text(size = 18)
+           , plot.title = element_text(size=30))
+g<-g+facet_grid(.~gender)
+g
+
+cdat<-ddply(ssn2, "type", summarize, rating.mean=mean(age))
+
+
+
+
+
+sv<-read.csv(file.choose())
+
+sv<-sv[, -1]
+sv$type<-"survey"
+sv$type<-as.factor(sv$type)
+str(sv)
+
+
+newdata<-rbind(sv, adjusted)
+
+
+g<-ggplot(aes(x=age), data=newdata)
+g<-g+geom_density(alpha=.5, aes(fill=type))
+g<-g+scale_fill_manual(values=c("light green", "light blue"))
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+           plot.title = element_text(size=30))
+g
+
+
+
+g<-ggplot(aes(x=age), data=newdata)
+g<-g+geom_density(alpha=.5, aes(fill=type))
+g<-g+scale_fill_manual(values=c("light green", "light blue"))
+g<-g+facet_grid(.~gender)
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18)
+           , strip.text.x = element_text(size = 18)
+           , plot.title = element_text(size=30))
+g
+
+
+
+
+
+g<-ggplot(aes(x=age), data=adjusted)
+g<-g+geom_histogram(color="black",position="identity", alpha=.5, aes(fill=gender), breaks=seq(10, 50
+                                                           , by=1))
+g<-g+scale_fill_manual(values=c("black", "blue"))
+g<-g+ylab("Count")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+           plot.title = element_text(size=30))
+g
+
+
+
+
+g<-ggplot(aes(x=age), data=newdata)
+g<-g+geom_histogram(color="black",position="identity", alpha=.5, aes(fill=gender), breaks=seq(10, 50
+                                                                                              , by=1))
+g<-g+scale_fill_manual(values=c("black", "blue"))
+g<-g+facet_grid(.~type)
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18)
+           , strip.text.x = element_text(size = 18)
+           , plot.title = element_text(size=30))
+g
+
+
+
+
+
+g<-ggplot(aes(x=age), data=adjusted)
+g<-g+geom_histogram(color="black",position="identity", alpha=.5, 
+                    aes(fill=gender), breaks=seq(10, 50 , by=1))
+                                                                                             
+g<-g+scale_fill_manual(values=c("black", "blue"))
+g<-g+ylab("Count")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18)
+           , strip.text.x = element_text(size = 18)
+           , plot.title = element_text(size=30))
+g
+
+
+
+
+
+
+g<-ggplot(aes(x=age), data=aaa1)
+g<-g+geom_histogram(color="black",position="identity", alpha=.5, 
+                    aes(fill=gender), breaks=seq(10, 50 , by=1))
+
+g<-g+scale_fill_manual(values=c("black", "blue"))
+g<-g+ylab("Count")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18)
+           , strip.text.x = element_text(size = 18)
+           , plot.title = element_text(size=30))
+g
+
+
+
+
+ddply(ssn2, .(gender,type), function(x){a=median(x$age)})
+
+
+
+
+g<-ggplot(aes(x=age), data=newdata2)
+g<-g+geom_density(alpha=.7, aes(fill=type))
+g<-g+scale_fill_manual(values=c("grey", "light green", "light blue"))
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+           plot.title = element_text(size=30))
+g
+
 
