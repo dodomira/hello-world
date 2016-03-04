@@ -70,13 +70,16 @@ g+geom_density(alpha=.3)+facet_grid(.~gender)
 
 
 g<-ggplot(aes(x=age, fill=source), data=new1)
-g+geom_density(alpha=.3)
+g+geom_density(alpha=.3)+facet_grid(.~gender)
+
 
 ddply(Combinded, .(source), function(x){mean(x$age)})
 
 
 g<-ggplot(aes(x=age, fill=source), data=Original)
-g+geom_density(alpha=.3, fill="black")+facet_grid(.~gender)
-
+g<-g+geom_histogram( fill="white", color="black", breaks=seq(10,80, by=1),aes(y=   ..density..))+ylab("비중")
+g<-g+theme(text = element_text(size=30))+title("Raw SSN 기준 연령분포")
+g
 
 ddply(new1, .(gender, source), function(x){mean(x$age)})
+
