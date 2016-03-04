@@ -1,0 +1,82 @@
+MDuser<-read.csv(file.choose())
+str(MDuser)
+
+
+MDuser.data<-as.data.frame(lapply(MDuser[, -1], scale))
+MDuser.data<-cbind(account_id=MDuser[, 1], MDuser.data)
+str(MDuser.data)
+names(MDuser.data)
+
+
+set.seed(123)
+MDkmeans<-kmeans(MDuser.data[, -c(1, 2, 4, 5)], centers=5, iter.max = 1000)
+
+MDuser<-cbind(MDuser, cluster=MDkmeans$cluster)
+MDuser$cluster<-as.factor(MDuser$cluster)
+str(MDuser)
+
+library(ggplot2)
+g<-ggplot(aes(x=usd_jan, y=sum), data=MDuser)
+g<-g+geom_point(aes(color=cluster, pch=cluster))+facet_grid(.~cluster)
+g<-g+geom_smooth(method="lm", formular=y~x)
+g
+
+
+library(doBy)
+summaryBy(.~cluster, MDuser)
+ddply(MDuser, .(cluster), function(x){nrow(x)})
+
+write.csv(MDuser, "MDuser.csv")
+
+
+
+read.csv(file.choose())->MDuserNEw
+
+library(reshape2)
+library(scales)
+
+g<-ggplot(aes(age), data=MDuserNEw)
+g<-g+geom_histogram(aes(fill=seg, y=   ..density.., group=seg), breaks=seq(12,40, by=1))+facet_grid(.~seg)
+g<-g+scale_y_continuous(labels = percent_format())
+g
+
+
+g<-ggplot(aes(a), data=a)
+g<-g+geom_histogram(aes(y=   ..density.., group=seg), breaks=seq(12,40, by=1))
+g<-g+geom_histogram(aes(fill=age.adjusted))
+
+g<-g+scale_y_continuous(labels = percent_format())+facet_grid(.~seg)
+g
+
+
+g<-ggplot(aes(age), data=MDuserNEw)
+g<-g+geom_density()+facet_grid(.~seg)
+g<-g+scale_y_continuous(labels = percent_format())
+g
+
+
+
+g<-ggplot(aes(x=age, fill=source), data=new1)
+g+geom_density(alpha=.3)+facet_grid(.~gender)
+
+
+
+
+
+
+
+g<-ggplot(aes(x=age, fill=source), data=new1)
+g+geom_density(alpha=.3)+facet_grid(.~gender)
+
+
+g<-ggplot(aes(x=age, fill=source), data=new1)
+g+geom_density(alpha=.3)
+
+ddply(Combinded, .(source), function(x){mean(x$age)})
+
+
+g<-ggplot(aes(x=age, fill=source), data=Original)
+g+geom_density(alpha=.3, fill="black")+facet_grid(.~gender)
+
+
+ddply(new1, .(gender, source), function(x){mean(x$age)})
