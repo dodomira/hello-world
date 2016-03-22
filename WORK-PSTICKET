@@ -1,0 +1,4 @@
+ps<-read.csv(file.choose())
+str(ps)
+
+ps[,c(3:5, 17)]<-(lapply(ps[, c(3:5, 17)], as.Date)) 
