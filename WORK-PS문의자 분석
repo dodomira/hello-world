@@ -1,0 +1,212 @@
+ps<-read.csv(file.choose())
+str(ps)
+
+ps[,c(3:5)]<-(lapply(ps[, c(3:5)], as.Date))
+ps[,c(21,22)]<-(lapply(ps[, c(21,22)], as.character))
+str(ps)
+
+
+
+ps1<-ps[ps$account_age=="#VALUE!", ]
+ps2<-ps[ps$account_age!="#VALUE!", ]
+ps1$account_age<-NA
+psn<-rbind(ps2, ps1)
+psn$account_age<-as.numeric(psn$account_age)
+str(psn)
+
+
+ps1<-psn[psn$?뿰?졊=="#N/A", ]
+ps2<-psn[psn$?뿰?졊!="#N/A", ]
+ps1$?뿰?졊<-NA
+psn<-rbind(ps2, ps1)
+psn$?뿰?졊<-as.numeric(psn$?뿰?졊)
+str(psn)
+
+ps1<-psn[psn$?꽦蹂?=="#N/A",]
+ps2<-psn[psn$?꽦蹂?!="#N/A", ]
+ps1$?꽦蹂?<-NA
+psn<-rbind(ps2, ps1)
+psn$?꽦蹂?<-as.factor(psn$?꽦蹂?)
+str(psn)
+
+
+ps1<-psn[psn$exact ==NA,]
+ps2<-psn[psn$exact !=NA, ]
+ps1$score<-0
+ps2$score<-1
+
+psn<-rbind(ps2, ps1)
+
+str(psn)
+
+
+
+
+
+
+g<-ggplot(psn, aes(x=T_type, y=exact))
+g+geom_boxplot(aes(fill=psn$T_type))
+
+
+g<-ggplot(ps, aes(exact))
+g+geom_histogram(breaks=seq(0,6), aes(y=..density..))+facet_grid(.~T_type)
+
+g<-ggplot(ps, aes(exact))
+g+geom_density(alpha=0.4, aes(fill=T_type))+facet_grid(.~T_type)+
+  geom_vline(data=ps,  lwd=0.4, aes(xintercept = mean(ps$exact, na.rm=TRUE)))+ylim(0, 1)
+
+
+ddply(psn, .(T_type), function(x){mean=mean(x$exact, na.rm=TRUE)})
+
+ggplot(df, aes(Var1, Freq))+geom_bar(stat="identity", alpha=.5, aes(fill=df$Var1))
+
+
+
+//由щ럭 ?룊媛 ?뿬遺?뿉 ?뵲瑜? 李⑥씠
+
+ddply(ps, .(score), summarize, playhour=mean(CH, na.rm=TRUE),
+spending=mean(CS, na.rm=TRUE)  )
+
+
+t.test(ps[ps$score==1,12], ps[ps$score==0,12])
+
+//?젏?닔?뿉 ?뵲瑜? 李⑥씠
+df<-ddply(ps, .(exact), summarize, playhour=mean(CH, na.rm=TRUE),
+      spending=mean(CS, na.rm=TRUE)  )
+
+analysis<-aov(exact~playhour, data=ps)
+
+
+//?씪諛? ?뵆?젅?씠?뼱 vs ps 臾몄쓽?옄 ?뿰?졊鍮꾧탳
+g<-ggplot(ab, aes(x=age, fill=type))+geom_density(alpha=.5)+facet_grid(.~type)+
+  
+scale_fill_manual(values=c("black", "blue"))+
+  scale_x_continuous(minor_breaks = seq(0 , 100, 5), breaks = seq(0, 00, 5))
+g<-g+ylab("Ratio")+xlab("Age")+ggtitle("Age distribution")
+g<-g+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+           plot.title = element_text(size=30), 
+           strip.text.x = element_text(size = 15))
+g
+
+//?씪諛? ?뵆?젅?씠?뼱 vs ps 臾몄쓽?옄 ?떆媛꾨퉬援?
+names(b1)<-names(a1)  
+a1$current_month_start_date<-as.Date(a1$current_month_start_date)
+a1$type<-"normal"
+b1$type<-"ps"
+rbind(a1, b1)->ab1
+str(ab1)
+
+g1<-ggplot(ab1, aes(x=hours_played, fill=type))+geom_density(alpha=.5)+facet_grid(.~type)+
+  scale_x_continuous( breaks = seq(0, 300, 20))+
+  scale_fill_manual(values=c("black", "blue"))
+g1<-g1+ylab("Ratio")+xlab("AGHPA")+ggtitle("AGHPA distribution")
+g1<-g1+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+             plot.title = element_text(size=30), 
+             strip.text.x = element_text(size = 15))
+g1
+
+
+summaryBy(.~type, ab1)
+
+//臾몄쓽 ?쑀?삎蹂?
+  
+ggplot(ps, aes(x=age, fill=T_type))+geom_density(alpha=.5)+facet_grid(.~T_type)
+ggplot(ps, aes(x=CH, fill=T_type))+geom_density(alpha=.5)+facet_grid(.~T_type)
+ggplot(ps[ps$lead_time<60, ], aes(x=T_type, y=lead_time, fill=T_type))+geom_boxplot(alpha=.5)+
+scale_y_continuous( minor_breaks = seq(0, 80, 1), breaks=seq(0, 80, 5))+
+  geom_hline(data=ps,  lwd=0.4, aes(yintercept = mean(ps$lead_time, na.rm=TRUE)))
+
+
+g3<-ggplot(ps, aes(satisfaction, fill=T_type))
+g3+geom_histogram(alpha=.5,  breaks=seq(0,6), aes(y=..density..))+facet_grid(.~T_type)+
+  scale_x_continuous( minor_breaks = seq(0, 5, 1))
+
+
+g3<-ggplot(ps[ps$lead_time<60, ], aes(x=lead_time, y=satisfaction, color=T_type))
+g3+geom_point(alpha=.5, position="jitter")+
+  geom_smooth(method = "lm",color="black", fill=NA, formula = y ~ x)+
+ facet_grid(.~T_type)
+
+
+
+
+
+
+
+
+
+ddply(ps, .(T_type), function(x){lm(formula = satisfaction ~ lead_time, data=x)->a
+  return(a$coefficients)})
+
+
+summaryBy(.~T_type, ps)->df
+
+ps$T_type = factor(ps$T_type,levels(ps$T_type)[c(10, 9, 4,  3, 1, 8, 2, 7, 5, 6)])
+
+
+ggplot(df, aes(문의유형, 비중, fill=문의유형))+geom_bar(stat="identity", alpha=.5, aes())
+
+
+
+g1<-ggplot(ps, aes(x=age, fill=T_type))+geom_density(alpha=.5)+facet_grid(.~T_type)+
+  scale_x_continuous( breaks = seq(0, 300, 20))+
+  scale_fill_manual(values=c("black", "blue"))
+g1<-g1+ylab("Ratio")+xlab("AGHPA")+ggtitle("AGHPA distribution")
+g1<-g1+theme(axis.text=element_text(size=12), axis.title= element_text(size=18), 
+             plot.title = element_text(size=30), 
+             strip.text.x = element_text(size = 15))
+g1
+
+ps$age>=40->ps$fake
+
+tapply(ps$age, ps$T_type, mean, na.rm=TRUE)
+
+
+ggplot(ps, aes(x=CH, fill=T_type))+geom_density(alpha=.5)+facet_grid(.~T_type)
+
+
+
+
+le<-cor[, c(1, 3)]
+lelm<-lm(data=le, formula = e~l)
+summary(lelm)
+
+lmm<-cor[, c(1, 4)]
+lmlm<-lm(data=lmm, formula = m~l)
+summary(lmlm)
+
+
+se<-ncor[, c(2, 3)]
+selm<-lm(data=se, formula = e~s)
+summary(selm)
+
+sm<-ncor[, c(2, 4)]
+smlm<-lm(data=sm, formula = m~s)
+summary(smlm)
+
+
+g3<-ggplot(ps[ps$lead_time<60, ], aes(x=lead_time, y=ediff))
+g3+geom_point(size=3, color="dark blue" , alpha=.3, position="jitter")+
+  geom_smooth(method = "lm",color="black", fill=NA, formula = y ~ x, lwd=2)
+
+g3<-ggplot(ps[ps$lead_time<60, ], aes(x=lead_time, y=mdiff))
+g3+geom_point(size=3, color="salmon" , alpha=.5, position="jitter")+
+  geom_smooth(method = "lm",color="black", fill=NA, formula = y ~ x, lwd=2)
+
+
+
+
+g3<-ggplot(ps, aes(x=satisfaction, y=ediff))
+g3+geom_point(size=3, color="dark blue" , alpha=.3, position="jitter")+
+  geom_smooth(method = "lm",color="black", fill=NA, formula = y ~ x, lwd=2)
+
+g3<-ggplot(ps, aes(x=satisfaction, y=mdiff))
+g3+geom_point(size=3, color="salmon" , alpha=.5, position="jitter")+
+  geom_smooth(method = "lm",color="black", fill=NA, formula = y ~ x, lwd=2)
+
+
+cor(ps$lead_time, ps$mdiff)
+cor(ps$lead_time, ps$ediff)
+
+cor(nps$satisfaction, nps$mdiff)
+cor(nps$satisfaction, nps$ediff)
