@@ -33,3 +33,59 @@ library(arules)
 trans.df<-as(split.df, "transactions")
 rules<- apriori(trans.df)
 
+
+
+
+//히트맵 그릴떄 사용한 것
+
+
+df<-read.csv(file.choose())
+library(arules)
+champion.list<-split(df$champion_id, df$account_id)
+champion.transaction<-as(champion.list, "transactions")
+champion.transaction
+
+rules<-apriori(champion.transaction, parameter= list(supp = 0.25, conf = 0.7, target = "rules")
+              )
+summary(rules)
+
+rule.list<-as.data.frame(inspect(rules))
+rule.list<-rule.list[order(rule.list$lift, decreasing=TRUE), ]
+rule.list
+write.csv(rule.list, "rlist2.csv")
+
+library(ggplot2)
+library(RColorBrewer)
+library(plyr)
+
+library(ggthemes)
+library(viridis)
+
+
+
+df2<-read.csv(file.choose())
+
+gg<-ggplot(df2, aes(x=asso, y=base, fill=lift))
+gg<-gg+geom_tile(color="white", size=0.1)
+gg<-gg+ scale_fill_viridis(name="# Events")
+gg <- gg + theme(axis.text.x = element_text(angle = 90, hjust = 1, size=9))
+gg
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
