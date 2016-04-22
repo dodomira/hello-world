@@ -1,0 +1,13 @@
+//테이블 만들어서 csv 파일 로드하기
+
+CREATE TABLE bi_sandbox.mjang_ps3
+(
+account_id INT,
+bad_date DATE,
+ban_type varchar(255),
+ML_tag INT,
+duration INT
+);
+
+copy  bi_sandbox.mjang_ps3 from local 'C:\Users\mjang\Desktop\Business analytics\projects\ps 문의자 분석\banlist.csv' delimiter E',' enclosed by '"';
+
