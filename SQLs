@@ -19,6 +19,9 @@ copy  bi_sandbox.mjang_ps3 from local
 select * from 테이블  limit 13
 
 
+ hive -e "select * from 테이블 where dt = '2016-01-01' limit 1;">outttt.tsv
+
+
 
 
 
