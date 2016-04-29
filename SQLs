@@ -9,5 +9,17 @@ ML_tag INT,
 duration INT
 );
 
-copy  bi_sandbox.mjang_ps3 from local 'C:\Users\mjang\Desktop\Business analytics\projects\ps 문의자 분석\banlist.csv' delimiter E',' enclosed by '"';
+copy  bi_sandbox.mjang_ps3 from local 
+'C:\Users\mjang\Desktop\Business analytics\projects\ps 문의자 분석\banlist.csv' delimiter E',' enclosed by '"';
+
+//결과 파일로 내보내기
+
+@export on;
+@export set filename="C:\Users/\mjang\Documents\sample3.txt" delimiter E',' enclosed by ',"' ;
+select * from 테이블  limit 13
+
+
+
+
+
 
