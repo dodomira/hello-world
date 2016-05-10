@@ -38,6 +38,10 @@ LIMIT 1000;
 
 
 
+///최소 최대 기준으로 다른 커럶 값 추출
+select store_account_id, max(transaction_datetime), max(last_rp) from 
+(select store_account_id, transaction_datetime, rp_balance, last_value(rp_balance) over(partition by store_account_id order by transaction_datetime range between unbounded preceding and unbounded following) last_rp
+from staging.store_transactions where realm_id=4 and store_account_id in (8262768, 3299238)) A group by store_account_id
 
 
 
