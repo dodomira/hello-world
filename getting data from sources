@@ -4,3 +4,13 @@ library(XML)
 url<-"http://fow.kr/find/dodomira"
 tt<-readHTMLTable(url, header=T)
 tt[[4]]
+
+
+
+library(RJDBC)
+vDriver <- JDBC(driverClass="com.vertica.jdbc.Driver", classPath="C:\\Program Files\\Vertica Systems\\JDBC\\vertica-jdk5-6.1.2-0.jar")
+vertica<-dbConnect(vDriver, "jdbc:vertica://vertica.global.riotgames.com:5433/riot", "mjang", "Sksthwndalfk2!")
+
+
+df <- dbGetQuery(vertica, "
+쿼리")
