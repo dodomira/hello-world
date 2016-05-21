@@ -44,4 +44,30 @@ select store_account_id, max(transaction_datetime), max(last_rp) from
 from staging.store_transactions where realm_id=4 and store_account_id in (8262768, 3299238)) A group by store_account_id
 
 
+///일본 DAU 추출 기본 쿼리
+
+SELECT 
+DD, native_jp, count(distinct(dau.account_id))
+FROM
+(select account_id, date(create_datetime + interval '17 hours' ) as DD 
+FROM staging.audit_player_game_statistics where realm_id = 62 group by account_id, DD) DAU
+LEFT OUTER JOIN
+(select c.ACCOUNT_ID, (case when c.native_jp = 0 or D.ping >40 then 0 else 1 end) as native_jp, ping
+FROM
+        (select A.account_id, sum(CASE WHEN B.realm_name='jp' then 1 else 0 end) as native_jp
+        FROM
+        ( select saa.account_id, saa.user_name FROM
+        (select account_id, user_name, min(date(modify_datetime)) as min_date, date(modify_datetime) as normal_date
+        from  staging.platform_accounts where realm_id = 62 group by account_id, user_name, normal_date) saa where saa.min_date = saa.normal_date
+        group by account_id, user_name) A
+        left outer join
+        (select pvpnet_account_name, realm_name from staging.signup_pvpnet_accounts group by pvpnet_account_name, realm_name) B
+        on A.user_name = B.pvpnet_account_name
+       group by a.account_id order by native_jp) C
+left outer join 
+        (SELECT 
+        account_id, avg(user_server_ping) as ping
+        from staging.audit_player_game_statistics where realm_id = 62 group by account_id) D
+on c.account_id = d.account_id ) BASE
+on DAU.account_id= BASE.account_id group by dd, native_jp
 
