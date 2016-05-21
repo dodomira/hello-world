@@ -1,0 +1,14 @@
+/// 다인큐가 같은 편 신고하는 비중이 더 많은가?
+select premade_size, same_team, count(distinct(uni)), count(*) FROM
+        (select E.*, CASE when E.offender_team_id = E.reporter_team_id then 1 else 0 end as same_team
+        FROM
+        (select C.*, D.team_id as reporter_team_id FROM
+        (select A.*, B.team_id as offender_team_id, B.premade_size FROM
+        (select offender_account_id, reporter_account_id, game_id, offender_account_id || '_' ||game_id as uni from    staging.internal_pb_reports) A
+        left outer join 
+        (select account_id, game_id, team_id, premade_size  from  staging.audit_player_game_statistics where realm_id = 4 and create_datetime > '2016-02-01') as B
+        on A.game_id = B.game_id and A.offender_account_id = B.account_id) C
+        left outer join 
+        (select account_id, game_id, team_id, premade_size  from  staging.audit_player_game_statistics where realm_id = 4 and create_datetime > '2016-02-01') as D
+        on C.game_id = D.game_id and C.reporter_account_id = D.account_id) E) F
+group by premade_size, same_team
