@@ -1,0 +1,61 @@
+df<-read.csv(file.choose())
+
+install.packages(c("rpart", "tree", "party"))
+install.packages('rattle')
+install.packages('rpart.plot')
+install.packages('RColorBrewer')
+
+library(caret)
+set.seed(10000)
+intrain<-createDataPartition(y=df$Smurf, p=0.7, list=FALSE)
+train<-df[intrain, ]
+test<-df[-intrain, ]
+
+library(party)
+partymod<-ctree(Smurf~. , data=train)
+plot(partymod)
+
+partypred<-predict(partymod, test)
+confusionMatrix(predict(partymod), train$Smurf)
+confusionMatrix(partypred, test$Smurf)  
+
+
+library(tree)
+treemod<-tree(Smurf~Tutorial.time + Finished_tutorial_flag + tutorial_flag + advanced_tutorial_flag +
+                low_rune_tag + low_tier+ is_first_ssn_flag + bot_percent +win_percent+ games_w_friend +
+                matched_percent+ Bot_easy_percent + MO_in30D +IP_boost_flag +   XP_boost_flag , data=train
+                 )
+plot(treemod)
+text(treemod)
+
+cv.trees<-cv.tree(treemod, FUN =prune.misclass)
+plot(cv.trees)
+prune.trees <- prune.misclass(treemod, best=4)
+plot(prune.trees)
+text(prune.trees, pretty=0)
+
+treepred <- predict(prune.trees, test, type='class')
+confusionMatrix(treepred, test$Smurf)
+confusionMatrix(predict(prune.trees, type='class'), train$Smurf)
+
+
+
+library(rpart)
+rpartmod<-rpart(Smurf~. , data=train, method="class")
+plot(rpartmod)
+text(rpartmod)
+
+library(rattle)
+library(rpart.plot)
+library(RColorBrewer)
+fancyRpartPlot(rpartmod)
+
+printcp(rpartmod)
+plotcp(rpartmod)
+
+ptree<-prune(rpartmod, cp= rpartmod$cptable[which.min(rpartmod$cptable[,"xerror"]),"CP"])
+fancyRpartPlot(ptree, uniform=TRUE)
+
+rpartpred<-predict(ptree, test, type='class')
+confusionMatrix(rpartpred, test$Smurf)
+confusionMatrix(predict(ptree, type='class'), train$Smurf)
