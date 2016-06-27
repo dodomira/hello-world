@@ -1,0 +1,11 @@
+select count(*), email_confirmation from
+(SELECT C.account_id, account_type, email, email_confirmation
+FROM
+(select account_id, current_month_start_date, account_type from bi_reports.monthly_unique_players
+where account_type like '%Churned%' and realm_id = 62 and current_month_start_date = '2016-05-01') C
+LEFT OUTER JOIN
+(select account_id, email, email_confirmation from staging.platform_Accounts 
+where realm_id = 62 and email <> 'accountcreation@riotgames.com' and email_confirmation is not null
+ group by  account_id, email, email_confirmation ) E
+ON C.account_id = E.account_id) D
+group by email_confirmation
