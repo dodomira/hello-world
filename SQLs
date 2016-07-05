@@ -43,6 +43,24 @@ select store_account_id, max(transaction_datetime), max(last_rp) from
 (select store_account_id, transaction_datetime, rp_balance, last_value(rp_balance) over(partition by store_account_id order by transaction_datetime range between unbounded preceding and unbounded following) last_rp
 from staging.store_transactions where realm_id=4 and store_account_id in (8262768, 3299238)) A group by store_account_id
 
+/// 최초 값 3개만 선택하기
+SELECT 
+F3.*, 
+FROM
+        (select C.*
+        FROM
+        (SELECT A.*, B.game_id, row_number() over (PARTITION by B.account_id order by B.game_id desc) as R 
+        FROM
+        (select * from bi_sandbox.mjang_smurf_survey) A
+        left outer join
+        (select account_id, game_id from bi_sandbox.gulee_legs_kda order by game_id desc) B 
+        on A.account_id = B.account_id) C
+        where R<4) F3
+LEFT OUTER JOIN
+
+
+
+
 
 ///일본 DAU 추출 기본 쿼리
 
