@@ -1,0 +1,71 @@
+df<-read.csv(file.choose())
+
+
+library(caret)
+set.seed(1234) #reproducability setting
+intrain<-createDataPartition(y=df$Smurf, p=0.7, list=FALSE) 
+train<-df[intrain, ]
+test<-df[-intrain, ]
+
+
+
+library(tree)
+treemod<-tree(Smurf~. , data=train)
+plot(treemod)
+text(treemod)
+
+cv.trees<-cv.tree(treemod, FUN=prune.misclass ) # for classification decision tree
+plot(cv.trees)
+
+
+prune.trees <- prune.misclass(treemod, best=6)  # for regression decision tree, use prune.tree function
+plot(prune.trees)
+text(prune.trees, pretty=0)
+
+
+library(e1071)
+treepred <- predict(prune.trees, test, type='class')
+confusionMatrix(treepred, test$Smurf)
+
+
+
+
+
+
+
+library(rpart)
+rpartmod<-rpart(Smurf~. , data=train, method="class")
+plot(rpartmod)
+text(rpartmod)
+
+ptree<-prune(rpartmod, cp= rpartmod$cptable[which.min(rpartmod$cptable[,"xerror"]),"CP"])
+plot(ptree)
+text(ptree)
+
+
+library(rattle)					# Fancy tree plot
+library(rpart.plot)				# Enhanced tree plots
+library(RColorBrewer)				# Color selection for fancy tree plot
+library(party)					# Alternative decision tree algorithm
+library(partykit)				# Convert rpart object to BinaryTree
+library(caret)	
+
+fancyRpartPlot(ptree)
+
+rpartpred<-predict(ptree, test, type='class')
+confusionMatrix(rpartpred, test$Smurf)
+
+
+library(party)
+partymod<-ctree(Smurf~., data=train)
+plot(partymod)
+
+
+partypred<-predict(partymod, test)
+confusionMatrix(partypred, test$Smurf) 
+
+
+nb_model <- naiveBayes(Smurf~.,data = train)
+
+nbpred <- predict(nb_model, test, type='class')
+confusionMatrix(nbpred, test$Smurf)
