@@ -2,7 +2,7 @@ df<-read.csv(file.choose())
 
 
 library(caret)
-set.seed(1234) #reproducability setting
+set.seed(0816) #reproducability setting
 intrain<-createDataPartition(y=df$Smurf, p=0.7, list=FALSE) 
 train<-df[intrain, ]
 test<-df[-intrain, ]
@@ -42,7 +42,6 @@ ptree<-prune(rpartmod, cp= rpartmod$cptable[which.min(rpartmod$cptable[,"xerror"
 plot(ptree)
 text(ptree)
 
-
 library(rattle)					# Fancy tree plot
 library(rpart.plot)				# Enhanced tree plots
 library(RColorBrewer)				# Color selection for fancy tree plot
@@ -51,6 +50,7 @@ library(partykit)				# Convert rpart object to BinaryTree
 library(caret)	
 
 fancyRpartPlot(ptree)
+fancyRpartPlot(rpartmod)
 
 rpartpred<-predict(ptree, test, type='class')
 confusionMatrix(rpartpred, test$Smurf)
@@ -60,12 +60,34 @@ library(party)
 partymod<-ctree(Smurf~., data=train)
 plot(partymod)
 
-
 partypred<-predict(partymod, test)
 confusionMatrix(partypred, test$Smurf) 
 
-
+#나이브베이지안
 nb_model <- naiveBayes(Smurf~.,data = train)
 
 nbpred <- predict(nb_model, test, type='class')
 confusionMatrix(nbpred, test$Smurf)
+
+#로지스틱회귀분석
+
+model<-glm(Smurf~MEDIUM+TUTORIAL+kill+death+assist+damage+win_rate+same_word+Finished_tutorial+
+             percent_matched+percent_bot+percent_easybot+percent_with_friend+precent_win+all_game   ,
+           data=train, family='binomial')
+summary(model)
+anova(model, test="Chisq")
+
+library(pscl)
+pR2(model)
+
+library(ROCR)
+p <- predict(model, newdata=test, type="response")
+pr <- prediction(p, test$Smurf)
+prf <- performance(pr, measure = "tpr", x.measure = "fpr")
+plot(prf)
+
+auc <- performance(pr, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+a
+confusionMatrix(predict(model, test, type='class'), test$Smurf)
