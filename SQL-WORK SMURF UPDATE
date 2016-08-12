@@ -1,0 +1,121 @@
+//테이블만들기
+create table bi_sandbox.mjang_smurf_update2
+(account_id INT
+,registration_date DATE
+,Smurf  varchar(255)
+);
+
+copy  bi_sandbox.mjang_smurf_update2 from local 
+'C:\Users\mjang\Desktop\Business analytics\projects\2016\스머프 분석 - 알고리즘 업데이트\survey res to upload2.csv' delimiter E',' enclosed by '"';
+
+//check
+select * from bi_sandbox.mjang_smurf_update2
+
+//튜토리얼 시간
+SELECT account_id, (case when difficulty = 'TUTORIAL' then game_length end) as TUTORIAL
+,(case when difficulty = 'MEDIUM' then game_length end) as MEDIUM
+FROM
+(SELECT account_id, difficulty,  TIMESTAMPDIFF(MINUTE,GH.create_datetime,PG.create_datetime)/60 as game_length
+FROM
+        (select A.account_id, game_id, difficulty, create_datetime
+        from bi_sandbox.mjang_smurf_update2 A 
+        left outer join 
+        (select account_id, game_id, difficulty, min(create_datetime) as create_datetime 
+        from staging.audit_player_game_statistics where game_type = 'TUTORIAL_GAME' and realm_id =4
+        group by account_id, game_id, difficulty) B 
+        on A.account_id = B.account_id) PG
+JOIN (
+        select game_id, create_datetime
+        from staging.audit_game_config_history
+        where realm_id=4) GH ON PG.game_id=GH.game_id  group by account_id, difficulty, game_length) AA
+        
+        
+// 튜토리얼 여부
+select A.account_id, max(tutorial_flag) as tutorial, max(display_elo_questionaire) elo, max(advanced_tutorial_flag) as advance_tutorial
+from bi_sandbox.mjang_smurf_update2 A LEFT OUTER JOIN platform.historical_summoners B 
+on A.account_id = B.account_id where B.realm_id=4 
+group by A.account_id , tutorial_flag, display_elo_questionaire, advanced_tutorial_flag 
+
+
+//첫30일 친구와 게임한 비중, 평균 큐 수
+SELECT A.account_id, count(*) as all_game
+, count(distinct(case when   game_type <> 'CUSTOM_GAME'  then game_id end)) as all_matched_game
+, count(distinct(case when  elo_change > 0 then game_id end)) as win_game
+, count(distinct(case when   sub_type in ('BOT', 'BOT_3x3') then game_id  end)) as bot_game
+, count(distinct(case when   sub_type in ('BOT', 'BOT_3x3') and difficulty = 'EASY' then game_id  end)) as bot_game_easy
+, count(distinct(case when  elo_change > 0 and sub_type in ('BOT', 'BOT_3x3') then game_id  end)) as bot_win_game
+, count(distinct(case when  premade_size > 0 then game_id  end)) as friend_game, rd, rd30
+from
+(select account_id, registration_date as rd, date(registration_date + interval '30' day) as rd30 from bi_sandbox.mjang_smurf_update2) as A
+left outer join
+(select account_id, date(create_datetime + interval '17 hours') as dd, game_id, premade_size, sub_type, game_type, elo_change, difficulty from staging.audit_player_game_statistics 
+where realm_id = 4 and create_datetime >='2016-03-01' ) B
+on A.account_id = B.account_id
+where dd between rd and rd30 group by a.account_id, rd, rd30
+
+
+//첫 3게임 KDA< 승률, 데미지
+SELECT D.account_id, avg(kills), avg(deaths), avg(assists), avg(damage_dealt), (CASE WHEN winner = 'true' then 1 else 0 end) as win, count(*) FROM
+        (select C.* FROM
+        (SELECT A.*, B.game_id, row_number() over (PARTITION by B.account_id order by game_datetime desc, B.game_id desc) as R 
+        FROM bi_sandbox.mjang_smurf_update2 A
+left outer join
+        (select gus.account_id, gus.game_id, gus.game_datetime from bi_sandbox.gulee_legs_kda as gus 
+        left outer join staging.audit_player_game_statistics gs 
+        on gus.account_id=gs.account_id and gus.game_id = gs.game_id
+        where gs.realm_id = 4 and game_type <> 'TUTORIAL_GAME' 
+        order by game_id desc) B 
+        on A.account_id = B.account_id) C 
+        where R<4) D
+LEFT OUTER JOIN 
+        (select game_id, winner, account_id, kills, deaths, assists, damage_dealt, damage_taken, game_datetime 
+        FROM bi_sandbox.gulee_legs_kda 
+        GROUP BY game_id, winner, account_id, kills, deaths, assists, damage_dealt, damage_taken, game_datetime 
+        ) E
+on D.account_id = E.account_id and D.game_id = E.game_id GROUP BY D.account_id, winner
+
+
+//# SSN갯수
+select C.account_id, count(distinct(case when C.registration_date > D.registration_datetime then D.account_id end)) as before_di, C.disc_hash
+from
+(select A.account_id, disc_hash, A.registration_date
+from bi_sandbox.mjang_smurf_update2 as A
+LEFT OUTER JOIN
+(select account_id, disc_hash from staging.kr_web_tmember where is_del_flag = 0) as B
+on A.account_id = B.account_id) C
+LEFT OUTER JOIN
+(select * from staging.kr_web_tmember where is_del_flag = 0 and account_id is not null) as D
+ on  C.disc_hash=D.disc_hash 
+group by c.account_id, C.disc_hash
+
+//비슷한 영문명 #2
+select Z.account_id, num, Z.filtered
+from
+(SELECT account_id, 
+(case when last_word >0.5 then user_name else substring(user_name, -1, length(user_name)+1 ) end) as filtered, user_name, last_word FROM
+(select A.account_id, B.user_name,  ASCII(substring(user_name, length(user_name), 1) ) - 57 as last_word  from bi_sandbox.mjang_smurf_update2 A
+left outer join  staging.platform_accounts B on A.account_id = B.account_id where B.realm_id = 4 group by A.account_id, B.user_name, last_word) BASE) Z
+left outer join
+(select filtered, count(1) as num from
+(SELECT account_id, 
+(case when last_word >0.5 then user_name else substring(user_name, -1, length(user_name)+1 ) end) as filtered, user_name FROM
+(select account_id, user_name, ASCII(substring(user_name, length(user_name), 1) ) - 57 as last_word  from staging.platform_accounts where realm_id = 4 
+group by account_id, user_name, last_word) as total) Y group by filtered) as Y1
+on Z.filtered = Y1.filtered
+
+//첫 3게임 KDA< 승률, 데미지
+SELECT D.account_id, avg(kills) as kill, avg(deaths) as death, avg(assists) as assist, avg(damage_dealt) as damage
+, sum(CASE WHEN winner = 'true' then 1 else 0 end) as win, count(*) FROM
+        (select C.* FROM
+        (SELECT A.*, B.game_id, row_number() over (PARTITION by B.account_id order by game_id) as R 
+        FROM bi_sandbox.mjang_smurf_update2 A
+left outer join
+        (select * from bi_sandbox.gulee_legs_kda order by game_id desc) B 
+        on A.account_id = B.account_id) C 
+        where R<4) D
+LEFT OUTER JOIN 
+        (select game_id, winner, account_id, kills, deaths, assists, damage_dealt, damage_taken, game_datetime 
+        FROM bi_sandbox.gulee_legs_kda 
+        GROUP BY game_id, winner, account_id, kills, deaths, assists, damage_dealt, damage_taken, game_datetime 
+        ) E
+on D.account_id = E.account_id and D.game_id = E.game_id GROUP BY D.account_id
