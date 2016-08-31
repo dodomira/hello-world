@@ -85,4 +85,24 @@ insert into bi_sandbox.mjang_table1 (account_id, active_current_month)
 select  account_id, active_current_month from bi_reports.monthly_unique_players where realm_id = 4 and current_month_start_date = '2016-06-01' limit 20
 
 
-
+//유형 별로 제일 처음 값 선택하기
+SELECT n2016.account_id, TUTORIAL, MEDIUM
+FROM
+new_2017 as n2016
+LEFT OUTER JOIN
+(select account_id, min(case when difficulty = 'TUTORIAL' then game_length end) as TUTORIAL
+                        , min(case when difficulty = 'MEDIUM' then game_length end) as MEDIUM
+FROM
+(select a.* from
+(SELECT account_id, PG .game_id, difficulty, row_number() over (PARTITION by difficulty, account_id order by PG.game_id) as oder, 
+TIMESTAMPDIFF(MINUTE,GH.create_datetime,PG.create_datetime)/60 as game_length
+FROM
+                        (select account_id, game_id, difficulty, create_datetime
+                        from staging.audit_player_game_statistics where game_type = 'TUTORIAL_GAME' and realm_id =4 and difficulty is not null
+                        group by account_id, game_id, difficulty, create_datetime) PG
+                        LEFT OUTER JOIN
+                         (select game_id, create_datetime
+                        from staging.audit_game_config_history
+                        where realm_id=4) GH ON PG.game_id = GH.game_id) A
+where a.oder = 1) B group by account_id) B
+ON n2016.account_id=B.account_id
