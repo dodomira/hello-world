@@ -127,3 +127,25 @@ for (S in SEASON) {
 ## save the dataset
 write.table(dataset, "Historical Skater Stats.csv", sep=",",
             row.names=F)
+            
+            
+            
+            
+            
+            
+            install.packages(c("KoNLP", "wordcloud2", "Rfacebook"))
+library(KoNLP)
+library(wordcloud2)
+library(Rfacebook)
+token<-'EAACEdEose0cBAH6A51YBLx15E39s9ENBbOo1wXk7ijetusvpfsireuQ8WirzOmv6TQvnN0K6f6D3AxjL00Cj42bpigA8qjcQ9NLmBzxxqXdxCaZCA65wI0uZBajKg3g2LW09pln7eaz1Uw4CNArnFSfvfJwD86iZAy2b7nM0gA7ZAYpZCg5bCcqT1xNEciPgZD'
+fb_page<-getPage(page="me", token=token, n=2000, since='2001/01/01', until='2017/07/18')
+fb_page$message
+all.reviews<-fb_page$message
+all.reviews<-all.reviews[!is.na(all.reviews)]
+nouns<-extractNoun(all.reviews)
+nouns_norm(Mapfunction(x{if(!is.na(x)%%is.ascii(x)toupper(x)else x)}, unlist(nouns)))
+
+
+extractNoun("나는 홍길동 입니다, 우리나라 만세 !!")
+
+
