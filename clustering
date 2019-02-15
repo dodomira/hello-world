@@ -1,0 +1,373 @@
+sample0<-read.csv("part-00000-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample1<-read.csv("part-00001-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample2<-read.csv("part-00002-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample3<-read.csv("part-00003-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample4<-read.csv("part-00004-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample5<-read.csv("part-00005-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample6<-read.csv("part-00006-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+sample7<-read.csv("part-00007-44e6015d-0185-49ea-8f88-fb9ccd49ebb1-c000.csv")
+
+##bind
+sample_jan<-rbind(
+  sample0, sample1, sample2, sample3, sample4, sample5, sample6, sample7
+  )
+
+##NA convert
+sample_jan$region <-as.character(sample_jan$region)
+sample_jan$region[is.na(sample_jan$region)] <- "US"
+sample_jan_df<-sample_jan[, c(1,2,c(7:65))] 
+
+## rulling out banned users and unplayed users
+df_clean<-na.omit(sample_jan_df)
+df_unbanned<-subset(df_clean, banned ==0)
+nrow(subset(df_clean,cnt_playdays==0))
+df<-df_unbanned
+
+##data set preparation for clustering
+#choose variable and normalize
+df1<-df[,c(6, 11, 13,23,35)]
+library(caret)
+library(plyr)
+df1<-as.data.frame(lapply(df1, scale))
+
+set.seed(32318)
+kmeans.df2<-kmeans(df1, centers = 5, iter.max = 100000)
+
+#clustering and saving result
+df_unbanned$cluster<-as.factor(kmeans.df2$cluster)
+library(doBy)
+View(summaryBy(.~cluster, data=df_unbanned))
+table(df_unbanned$cluster)
+
+write.csv(df_unbanned, "cluster2.csv")
+
+#Dec user analysis
+
+dec0<-read.csv("part-00000-51690eb3-7cb9-41fd-97cb-aec8c93afad3-c000.csv")
+dec1<-read.csv("part-00001-51690eb3-7cb9-41fd-97cb-aec8c93afad3-c000.csv")
+dec2<-read.csv("part-00002-51690eb3-7cb9-41fd-97cb-aec8c93afad3-c000.csv")
+
+sample_dec<-rbind(
+  dec0, dec1, dec2
+)##보미님 12월 데이터
+
+##NA 변환
+sample_dec$region <-as.character(sample_dec$region)
+sample_dec$region[is.na(sample_dec$region)] <- "US" ##Convert NA to US
+sample_dec<-sample_dec[, -c(3,4)] ## Delete other variables that have "NA" value
+
+##rulling out banned users and unplayed users
+dec_clean<-na.omit(sample_dec)
+dec_unbanned<-subset(dec_clean, banned ==0)
+
+##hard code - 1월 클러스터링 변수명 찾아서 분석용 데이터만들기
+dec<-dec_unbanned[,c(6, 11, 13, 28,  36)] # game_ts, rate_solo, 스쿼드, 데미지, 웨폰사용
+colnames(dec)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+dec<-as.data.frame(lapply(dec, scale))
+
+##1월 중심에 가장 근접한 클러스터 부여 Function 생성
+predict.kmeans <- function(object,
+                           newdata,
+                           method = c("centers", "classes")) {
+  method <- match.arg(method)
+  
+  centers <- object$centers
+  ss_by_center <- apply(centers, 1, function(x) {
+    colSums((t(newdata) - x) ^ 2)
+  })
+  best_clusters <- apply(ss_by_center, 1, which.min)
+  
+  if (method == "centers") {
+    centers[best_clusters, ]
+  } else {
+    best_clusters
+  }
+}
+
+dec_cluster<-predict.kmeans( kmeans.df1, dec)
+
+##dec데이터에 클러스터 부여 and excel export
+dec_unbanned$cluster<-row.names(dec_cluster)
+View(summaryBy(.~cluster, data=dec_unbanned))
+table(dec_unbanned$cluster)
+
+write.csv(dec_unbanned, "dec.csv")
+
+
+##사녹 분석
+
+##aug-sep case
+df_aug<-subset(df_unbanned, aug_active ==1)
+aug_sep<-subset(df_aug, sep_active ==1)
+aug_sep0<-subset(df_aug, sep_active ==0)
+
+t.test(aug_sep, aug_sep0 , paired = FALSE, var.equal = TRUE, conf.level = 0.95)
+
+library(reshape2)
+df_aug<-subset(df_unbanned, aug_active ==1)
+dcast(aggregate(aug_sanhok~cluster + sep_active, df_aug, mean), 
+      cluster~sep_active, fun.aggregate=mean)
+
+
+df_sep<-subset(df_unbanned, sep_active ==1)
+dcast(aggregate(sep_sanhok~cluster + oct_active, df_sep, mean), 
+      cluster~oct_active, fun.aggregate=mean)
+
+
+df_oct<-subset(df_unbanned, oct_active ==1)
+dcast(aggregate(oct_sanhok~cluster + nov_active, df_oct, mean), 
+      cluster~nov_active, fun.aggregate=mean)
+
+
+df_nov<-subset(df_unbanned, nov_active ==1)
+dcast(aggregate(nov_sanhok~cluster + dec_active, df_nov, mean), 
+      cluster~dec_active, fun.aggregate=mean)
+
+
+
+aggregate(scale~cluster, df_unbanned, mean)
+
+
+
+
+##sanhok cluster
+
+kmeans.aug<-kmeans(df_aug[,52], centers = 5, iter.max = 100000)
+
+#clustering and saving result
+df_aug$cluster<-as.factor(kmeans.aug$cluster)
+aggregate(sep_active~cluster, df_aug, mean)
+
+
+
+
+
+####Sanhok correlation analysis
+names(df15_unbanned_aug)
+aug_sample<-df15_unbanned_aug[, c(56)]
+#normalizing
+aug_sample$aug_sanhok<-scale(aug_sample$aug_sanhok)
+kmeans.unban_aug<-kmeans(aug_sample, centers = 6, iter.max = 100000)
+
+df15_unbanned_aug$cluster<-as.factor(kmeans.unban_aug$cluster)
+View(summaryBy(.~cluster, data=df15_unbanned_aug))
+plot(df15_unbanned_aug$aug_sanhok, df15_unbanned_aug$sep_active)
+cor(df15_unbanned_aug$aug_sanhok, df15_unbanned_aug$sep_active)
+cor(df15_unbanned_sep$sep_sanhok, df15_unbanned_sep$oct_active)
+
+
+
+##Feb-Nov
+sample_feb<-read.csv("part-00000-9eff2851-1622-4c17-a147-309569e3327e-c000.csv")
+sample_mar<-read.csv("part-00000-df8f6ba7-560b-4eaa-97ba-70fae9f237fd-c000.csv")
+sample_apr<-read.csv("part-00000-98bca476-d19e-4cc5-aef3-3e4c5e97b95d-c000.csv")
+sample_may<-read.csv("part-00000-5b54c01e-e1a3-4b57-955f-941cd3d4ab95-c000.csv")
+sample_jun<-read.csv("part-00000-ef9529d9-5653-46d2-bb37-2f19ce88c97c-c000.csv")
+sample_jul<-read.csv("part-00000-5b84510a-6520-4c63-9046-6f7d75c87e5b-c000.csv")
+sample_aug<-read.csv("part-00000-9d2d3b8f-0b1f-49ec-9c7d-6cbaa4894262-c000.csv")
+sample_sep<-read.csv("part-00000-12693612-d9d9-41ef-81c4-1e17a7a533eb-c000.csv")
+sample_oct<-read.csv("part-00000-98f68c00-f642-4ad9-a70e-29ac9732b39b-c000.csv")
+sample_nov<-read.csv("part-00000-7f55b9d6-b35d-4089-8aa6-16c391151b6d-c000.csv")
+
+
+##NA convert and ## rulling out banned users and unplayed users
+sample_feb$region <-as.character(sample_feb$region)
+sample_feb$region[is.na(sample_feb$region)] <- "US"
+sample_feb<-sample_feb[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+feb_clean<-na.omit(sample_feb)
+feb_unbanned<-subset(feb_clean, banned ==0)
+feb<-feb_unbanned[, c(5,11,13,28,36)]
+colnames(feb)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+feb<-as.data.frame(lapply(feb, scale))
+
+#클러스터링 and 결과 확인
+feb_cluster<-predict.kmeans( kmeans.df1, feb)
+feb_unbanned$cluster<-row.names(feb_cluster)
+feb_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=feb_unbanned)))
+feb_summary$ratio<-table(feb_unbanned$cluster)
+feb_summary$month<-"feb"
+
+##Mar
+sample_mar$region <-as.character(sample_mar$region)
+sample_mar$region[is.na(sample_mar$region)] <- "US"
+sample_mar<-sample_mar[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+mar_clean<-na.omit(sample_mar)
+mar_unbanned<-subset(mar_clean, banned ==0)
+mar<-mar_unbanned[, c(5,11,13,28,36)]
+colnames(mar)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+mar<-as.data.frame(lapply(mar, scale))
+
+#클러스터링 and 결과 확인
+mar_cluster<-predict.kmeans( kmeans.df1, mar)
+mar_unbanned$cluster<-row.names(mar_cluster)
+mar_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=mar_unbanned)))
+mar_summary$ratio<-table(mar_unbanned$cluster)
+mar_summary$month<-"mar"
+
+
+##apr
+
+sample_apr$region <-as.character(sample_apr$region)
+sample_apr$region[is.na(sample_apr$region)] <- "US"
+sample_apr<-sample_apr[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+apr_clean<-na.omit(sample_apr)
+apr_unbanned<-subset(apr_clean, banned ==0)
+apr<-apr_unbanned[, c(5,11,13,28,36)]
+colnames(apr)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+apr<-as.data.frame(lapply(apr, scale))
+
+#클러스터링 and 결과 확인
+apr_cluster<-predict.kmeans( kmeans.df1, apr)
+apr_unbanned$cluster<-row.names(apr_cluster)
+apr_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=apr_unbanned)))
+apr_summary$ratio<-table(apr_unbanned$cluster)
+apr_summary$month<-"apr"
+
+
+##May
+sample_may$region <-as.character(sample_may$region)
+sample_may$region[is.na(sample_may$region)] <- "US"
+sample_may<-sample_may[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+may_clean<-na.omit(sample_may)
+may_unbanned<-subset(may_clean, banned ==0)
+may<-may_unbanned[, c(5,11,13,28,36)]
+colnames(may)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+may<-as.data.frame(lapply(may, scale))
+
+#클러스터링 and 결과 확인
+may_cluster<-predict.kmeans( kmeans.df1, may)
+may_unbanned$cluster<-row.names(may_cluster)
+may_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=may_unbanned)))
+may_summary$ratio<-table(may_unbanned$cluster)
+may_summary$month<-"may"
+
+##june
+sample_jun$region <-as.character(sample_jun$region)
+sample_jun$region[is.na(sample_jun$region)] <- "US"
+sample_jun<-sample_jun[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+jun_clean<-na.omit(sample_jun)
+jun_unbanned<-subset(jun_clean, banned ==0)
+jun<-jun_unbanned[, c(5,11,13,28,36)]
+colnames(jun)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+jun<-as.data.frame(lapply(jun, scale))
+
+#클러스터링 and 결과 확인
+jun_cluster<-predict.kmeans( kmeans.df1, jun)
+jun_unbanned$cluster<-row.names(jun_cluster)
+jun_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=jun_unbanned)))
+jun_summary$ratio<-table(jun_unbanned$cluster)
+jun_summary$month<-"jun"
+
+
+##july
+sample_jul$region <-as.character(sample_jul$region)
+sample_jul$region[is.na(sample_jul$region)] <- "US"
+sample_jul<-sample_jul[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+jul_clean<-na.omit(sample_jul)
+jul_unbanned<-subset(jul_clean, banned ==0)
+jul<-jul_unbanned[, c(5,11,13,28,36)]
+colnames(jul)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+jul<-as.data.frame(lapply(jul, scale))
+
+#클러스터링 and 결과 확인
+jul_cluster<-predict.kmeans( kmeans.df1, jul)
+jul_unbanned$cluster<-row.names(jul_cluster)
+jul_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=jul_unbanned)))
+jul_summary$ratio<-table(jul_unbanned$cluster)
+jul_summary$month<-"jul"
+
+##aug
+sample_aug$region <-as.character(sample_aug$region)
+sample_aug$region[is.na(sample_aug$region)] <- "US"
+sample_aug<-sample_aug[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+aug_clean<-na.omit(sample_aug)
+aug_unbanned<-subset(aug_clean, banned ==0)
+aug<-aug_unbanned[, c(5,11,13,28,36)]
+colnames(aug)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+aug<-as.data.frame(lapply(aug, scale))
+
+
+#클러스터링 and 결과 확인
+aug_cluster<-predict.kmeans( kmeans.df1, aug)
+aug_unbanned$cluster<-row.names(aug_cluster)
+aug_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=aug_unbanned)))
+aug_summary$ratio<-table(aug_unbanned$cluster)
+aug_summary$month<-"aug"
+
+##sep
+sample_sep$region <-as.character(sample_sep$region)
+sample_sep$region[is.na(sample_sep$region)] <- "US"
+sample_sep<-sample_sep[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+sep_clean<-na.omit(sample_sep)
+sep_unbanned<-subset(sep_clean, banned ==0)
+sep<-sep_unbanned[, c(5,11,13,28,36)]
+colnames(sep)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+sep<-as.data.frame(lapply(sep, scale))
+
+#클러스터링 and 결과 확인
+sep_cluster<-predict.kmeans( kmeans.df1, sep)
+sep_unbanned$cluster<-row.names(sep_cluster)
+sep_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=sep_unbanned)))
+sep_summary$ratio<-table(sep_unbanned$cluster)
+sep_summary$month<-"sep"
+
+##oct
+sample_oct$region <-as.character(sample_oct$region)
+sample_oct$region[is.na(sample_oct$region)] <- "US"
+sample_oct<-sample_oct[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+oct_clean<-na.omit(sample_oct)
+oct_unbanned<-subset(oct_clean, banned ==0)
+oct<-oct_unbanned[, c(5,11,13,28,36)]
+colnames(oct)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+oct<-as.data.frame(lapply(oct, scale))
+
+#클러스터링 and 결과 확인
+oct_cluster<-predict.kmeans( kmeans.df1, oct)
+oct_unbanned$cluster<-row.names(oct_cluster)
+oct_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=oct_unbanned)))
+oct_summary$ratio<-table(oct_unbanned$cluster)
+oct_summary$month<-"oct"
+
+##nov
+sample_nov$region <-as.character(sample_nov$region)
+sample_nov$region[is.na(sample_nov$region)] <- "US"
+sample_nov<-sample_nov[, -c(10:13)] ###########한번만 해야됨!!!!!!!!!!
+
+nov_clean<-na.omit(sample_nov)
+nov_unbanned<-subset(nov_clean, banned ==0)
+nov<-nov_unbanned[, c(5,11,13,28,36)]
+colnames(nov)[c(1, 4)]<-c("sum_all_ts", "avg_DamageDealt")
+nov<-as.data.frame(lapply(nov, scale))
+
+#클러스터링 and 결과 확인
+nov_cluster<-predict.kmeans( kmeans.df1, nov)
+nov_unbanned$cluster<-row.names(nov_cluster)
+nov_summary<-as.data.frame(
+  (summaryBy(.~cluster, data=nov_unbanned)))
+nov_summary$ratio<-table(nov_unbanned$cluster)
+nov_summary$month<-"nov"
+
+
+all_summary<-rbind(feb_summary, mar_summary, apr_summary, may_summary, 
+                   jun_summary, jul_summary, aug_summary, sep_summary, 
+                   oct_summary, nov_summary)
+
+write.csv(all_summary, "all_summary.csv")
