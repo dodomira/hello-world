@@ -1,0 +1,38 @@
+Jul<-read.csv(file.choose())
+
+##NA convert
+Jul$official_region <-as.character(Jul$official_region)
+Jul$official_region[is.na(Jul$official_region)] <- "US"
+Jul_sample<-Jul[, -c(10:14)] 
+
+## rulling out banned users and unplayed users
+Jul_sample<-na.omit(Jul_sample)
+Jul_unbanned<-subset(Jul_sample, banned ==0)
+
+##data set preparation for clustering
+#choose variable and normalize
+df1<-Jul_unbanned[,c(6, 10,13,23, 41, 43)]
+library(caret)
+library(plyr)
+df1<-as.data.frame(lapply(df1, scale))
+
+set.seed(32318)
+kmeans.df1<-kmeans(df1, centers = 6, iter.max = 100000)
+
+#clustering and saving result
+Jul_unbanned$cluster<-as.factor(kmeans.df1$cluster)
+library(doBy)
+View(summaryBy(.~cluster, data=Jul_unbanned))
+table(Jul_unbanned$cluster)
+
+
+library(ggplot2)
+
+a1<-ggplot(Jul_unbanned)+geom_bar(aes(official_region, fill=cluster), position="fill")
+a2<-ggplot(Jul_unbanned, aes(x=game_ts, fill=cluster))+geom_density(alpha=0.5)+facet_wrap(~official_region, scales="free")
+a3<-ggplot(Jul_unbanned, aes(x=rate_fpp, fill=cluster))+  geom_density(alpha=0.5)+facet_wrap(~official_region, scales="free")
+a4<-ggplot(Jul_unbanned, aes(x=rate_sanhok, fill=cluster))+
+  geom_density(alpha=0.5)+facet_grid(cluster~official_region, scales="free")
+
+a5<-ggplot(Jul_unbanned, aes(x=avg_damage, fill=cluster))+
+  geom_density(alpha=0.5)+facet_grid(~official_region, scales="free")
