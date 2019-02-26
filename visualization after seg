@@ -36,3 +36,61 @@ a4<-ggplot(Jul_unbanned, aes(x=rate_sanhok, fill=cluster))+
 
 a5<-ggplot(Jul_unbanned, aes(x=avg_damage, fill=cluster))+
   geom_density(alpha=0.5)+facet_grid(~official_region, scales="free")
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  sample_jan<-Jul
+
+sample_jan$region <-as.character(sample_jan$region)
+sample_jan$region[is.na(sample_jan$region)] <- "US"
+sample_jan_df<-sample_jan[, c(1,2,c(7:65))] 
+
+## rulling out banned users and unplayed users
+df_clean<-na.omit(sample_jan_df)
+df_unbanned<-subset(df_clean, banned ==0)
+nrow(subset(df_clean,cnt_playdays==0))
+df<-df_unbanned
+
+##data set preparation for clustering
+#choose variable and normalize
+df1<-df[,c(6, 11, 13,23,35)]
+library(caret)
+library(plyr)
+df1<-as.data.frame(lapply(df1, scale))
+
+set.seed(32318)
+kmeans.df2<-kmeans(df1, centers = 6, iter.max = 100000)
+
+#clustering and saving result
+df_unbanned$cluster<-as.factor(kmeans.df2$cluster)
+library(doBy)
+View(summaryBy(.~cluster, data=df_unbanned))
+table(df_unbanned$cluster)
+
+
+b1<-ggplot(df_unbanned)+geom_bar(aes(region, fill=cluster), position="fill")
+b2<-ggplot(df_unbanned, aes(x=sum_game_ts, fill=cluster))+geom_density(alpha=0.5)+facet_wrap(~region, scales="free")
+b3<-ggplot(df_unbanned, aes(x=rate_fpp, fill=cluster))+  geom_density(alpha=0.5)+facet_wrap(~region, scales="free")
+b5<-ggplot(df_unbanned, aes(x=avg_damage, fill=cluster))+
+  geom_density(alpha=0.5)+facet_wrap(~region, scales="free")
+
+b6<-ggplot(df_unbanned, aes(x=avg_weapon_use, fill=cluster))+
+  geom_density(alpha=0.5)+facet_wrap(~region, scales="free")
+
+b7<-ggplot(df_unbanned, aes(x=rate_solo, fill=cluster))+
+  geom_density(alpha=0.5)+facet_wrap(~region, scales="free")
+
+b8<-ggplot(df_unbanned, aes(x=rate_squad, fill=cluster))+
+  geom_density(alpha=0.5)+facet_wrap(~region, scales="free")
+  
+  
+  
+  
