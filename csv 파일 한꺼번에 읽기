@@ -1,0 +1,7 @@
+setwd("C:/Users/mira/Downloads/July")
+library(data.table)
+files = list.files(pattern="*.csv")
+DT = do.call(rbind, lapply(files, fread))
+# The same using `rbindlist`
+DT = rbindlist(lapply(files, fread))
+df_jan<-as.data.frame(DT)
