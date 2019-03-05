@@ -1,0 +1,140 @@
+setwd("C:/Users/mira/Downloads/July")
+library(data.table)
+files = list.files(pattern="*.csv")
+DT = do.call(rbind, lapply(files, fread))
+# The same using `rbindlist`
+DT = rbindlist(lapply(files, fread))
+df_jan<-as.data.frame(DT)
+
+
+df_jan<-read.csv(file.choose())
+
+##NA convert
+df_jan$official_region <-as.character(df_jan$official_region)
+df_jan$region[is.na(df_jan$region)] <- "US"
+jan<-df_jan[, -c(10:14)] 
+
+
+## rulling out banned users and unplayed users + BR variable
+jan_clean<-na.omit(jan)
+jan_unbanned<-subset(jan_clean, banned ==0)
+df<-jan_unbanned
+df$br<-1-(df$rate_sanhok+df$rate_random)
+df<-df[, -c(32:34)]
+
+##data set preparation for clustering
+#choose variable and normalize
+df1<-df[,c(6,10,12, 13, 32,39, 40)]
+library(caret)
+library(plyr)
+df1<-as.data.frame(lapply(df1, scale))
+
+
+
+
+set.seed(32318)
+kmeans.df1<-kmeans(df1, centers = 6, iter.max = 100000)
+
+#clustering and saving result
+df$cluster<-as.factor(kmeans.df1$cluster)
+library(doBy)
+View(summaryBy(.~cluster, data=df))
+View(summaryBy(logincount+game_ts+rate_solo+rate_squad+
+                 rate_fpp+avg_damage+rate_sanhok+rate_random~cluster, data=df))
+
+table(df$cluster)
+Jul_unbanned<-df
+
+a1<-ggplot(Jul_unbanned)+geom_bar(aes(official_region, fill=cluster), position="fill")
+a2<-ggplot(Jul_unbanned, aes(x=game_ts, fill=cluster))+geom_density(alpha=0.5)+facet_wrap(~official_region, scales="free")
+a3<-ggplot(Jul_unbanned, aes(x=rate_fpp, fill=cluster))+  geom_density(alpha=0.5)+facet_wrap(~official_region, scales="free")
+a4<-ggplot(Jul_unbanned, aes(x=rate_sanhok, fill=cluster))+
+  geom_density(alpha=0.5)+facet_grid(cluster~official_region, scales="free")
+
+a5<-ggplot(Jul_unbanned, aes(x=avg_damage, fill=cluster))+
+  geom_density(alpha=0.5)+facet_grid(cluster~official_region, scales="free")
+
+
+
+
+
+
+
+
+
+write.csv(dfa, "option2.csv")
+
+##시각화
+library(ggplot2)
+ggplot(data=dfa, aes(x=avg_damage, y=all_ts))+
+  geom_point(aes(color=cluster))+facet_wrap(~ official_region)
+
+
+
+
+
+df1<-df[,c(5,10,12, 23)]
+library(caret)
+library(plyr)
+df1<-as.data.frame(lapply(df1, scale))
+
+
+##최적K갯수
+wssplot <- function(data, nc=15, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+wssplot(df1)
+
+
+
+set.seed(32318)
+kmeans.df1<-kmeans(df1, centers = 6, iter.max = 100000)
+
+#clustering and saving result
+dfa$cluster<-as.factor(kmeans.df1$cluster)
+library(doBy)
+View(summaryBy(.~cluster, data=dfa))
+table(dfa$cluster)
+
+
+write.csv(dfa, "option3.csv")
+
+
+
+###time+damage+social+sanhok
+
+df1<-df[,c(5,10,23, 42, 43, 46)]
+library(caret)
+library(plyr)
+df1<-as.data.frame(lapply(df1, scale))
+
+
+##최적K갯수
+wssplot <- function(data, nc=15, seed=1234){
+  wss <- (nrow(data)-1)*sum(apply(data,2,var))
+  for (i in 2:nc){
+    set.seed(seed)
+    wss[i] <- sum(kmeans(data, centers=i)$withinss)}
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab="Within groups sum of squares")}
+
+wssplot(df1)
+
+
+
+set.seed(32318)
+kmeans.df1<-kmeans(df1, centers = 6, iter.max = 100000)
+
+#clustering and saving result
+dfa$cluster<-as.factor(kmeans.df1$cluster)
+library(doBy)
+View(summaryBy(.~cluster, data=dfa))
+table(dfa$cluster)
+
+
+write.csv(dfa, "option4.csv")
