@@ -138,3 +138,26 @@ table(dfa$cluster)
 
 
 write.csv(dfa, "option4.csv")
+
+
+
+
+filePaths <- list.files( "C:/Users/User/Downloads/GA2019Jan","\\.csv$", full.names = TRUE)
+result <- do.call(rbind, lapply(filePaths, read.csv))
+df_ga<-result
+##cleanse
+df_ga$official_region <-as.character(df_ga$official_region)
+jul2<-df_jul2[, -c(10:14)]
+jul_clean2<-na.omit(jul2)
+jul_unbanned2<-subset(jul_clean2, banned ==0)
+df2<-jul_unbanned2
+df2$br<-1-(df2$rate_sanhok+df2$rate_random)
+
+df3<-df2[,c(6,10,12, 13, 27,41, 43)]
+library(caret)
+library(plyr)
+df3<-as.data.frame(lapply(df3, scale))
+
+
+
+
